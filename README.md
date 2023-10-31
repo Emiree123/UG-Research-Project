@@ -14,4 +14,4 @@ git push origin feat_goodbye_world: push feature branch to github website (after
 git add . (all the files that have been changed)
 git commit -m "commit message" (description of the change that was made)
 
-dummy change
+dummy change 2
