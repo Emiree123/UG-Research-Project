@@ -9,3 +9,7 @@ git push origin feat_goodbye_world: push feature branch to github website (after
  git checkout main
  git remote update: download changes from github website (but don't activate them yet)
  git pull origin main: pull (activate) the recent changes
+ 
+ ##commiting changes
+git add . (all the files that have been changed)
+git commit -m "commit message" (description of the change that was made)
