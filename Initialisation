@@ -1,0 +1,15 @@
+'''
+Tasks:
+Figure out how to load the data into python
+Work out how to set the first 300 samples of every signal to be zero (to mask the electronic noise)
+Perform envelope detection (Hilbert transform) of all the signals and save as a new variable.
+Write a function that performs steps 2 and 3. Takes rcvData as an input, and returns envData as an output 
+'''
+
+# Data preparation and understanding code
+# 1.1 Python code to prepare/understand the data
+from pathlib import Path
+# Importing pandas from library
+import pandas as pd 
+
+df = pd.read_cs('dataset.csv)
