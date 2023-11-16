@@ -1,3 +1,142 @@
+import scipy.io
+import matplotlib.pyplot as plt
+from scipy import signal
+from scipy.fft import fft, fftshift
+from scipy.signal import hilbert
+from scipy.signal.windows import tukey 
+import numpy as np
+
+# Load the .mat file and access from loaded data
+print = "I'm loading"
+data = scipy.io.loadmat('data/ultrasound_reflection_data.mat')
+rcvData = data['rcvData']
+
+"""
+Apply a Tukey window to a given signal.
+
+Parameters:
+- signal: The input signal to which the Tukey window will be applied.
+- alpha: The parameter controlling the shape of the Tukey window.
+         0 corresponds to a rectangular window, and 1 corresponds to a Hann window.
+         Values between 0 and 1 produce a Tukey window with intermediate shapes.
+Returns:
+- The input signal multiplied by the Tukey window.
+"""
+
+# Create and apply the window
+def tukey_window(signal, alpha=0.5):
+    window = tukey(len(signal), alpha)
+    signal_win = signal * window
+    return signal_win
+
+'''Homogenous Delay and Sum algorithm
+Parameters: 
+- rcvData: 3D array representing received signals (transmitters x receivers x time samples).
+- fs: Sampling frequency.
+- c: Speed of sound in the medium.
+- pitch: Distance between adjacent transducer elements.
+- focal_depth: Depth at which the image is focused.
+
+Returns:
+- A 2D array representing the ultrasound image.'''
+
+# def homogeneous_DAS_algorithm(rcvData, alpha=0.5, fs, c, pitch, focal_depth):
+def homogeneous_DAS_algorithm(rcvData, alpha=0.5):
+    nTx = rcvData.shape[0]
+    nRx = rcvData.shape[1]
+    nt = rcvData.shape[2]
+
+    envelope_data = np.zeros((nTx, nRx, nt))
+    # Extracting the signal for the first transmitter and 141st receiver
+    signal_first_transmitter_141st_receiver = rcvData[0, 140, :]
+    # Compute the analytic signal using the Hilbert transform
+    analytic_signal = hilbert(signal_first_transmitter_141st_receiver)
+
+    for Tx in range(nTx):
+        for Rx in range(nRx):
+            delay = 2 * focal_depth / c  # Simplified delay calculation
+            delay_samples = int(delay * fs)
+            signal = rcvData[Tx, Rx, :]
+            signal_win = tukey_window(signal, alpha=alpha)
+            analytic_signal = hilbert(signal_win)
+            envelope = abs(analytic_signal)
+            envelope_data[Tx, Rx, :] = envelope
+            # Apply delay and sum the signals
+            envelope_data[Tx, :] += np.roll(rcvData[Tx, Rx, :], delay_samples)
+            envelope_data = np.abs(hilbert(envelope_data))
+    return envelope_data
+
+# Parameters
+fs = 10e6  # Sampling frequency (Hz)
+c = 1540  # Speed of sound in tissue (m/s)
+pitch = 0.2e-3  # Distance between adjacent transducer elements (m)
+focal_depth = 0.02  # Depth at which the image is focused (m)
+
+# Create a new array to store the results
+# result = homogeneous_DAS_algorithm(rcvData, fs, c, pitch, focal_depth)
+result = homogeneous_DAS_algorithm(rcvData)
+new_column_data = np.zeros((result.shape[0], result.shape[1]))
+
+# Display the resulting image
+plt.imshow(result, aspect='auto', extent=(0, result.shape[1]/fs, 0, result.shape[0]*pitch))
+plt.title('Ultrasound Image - Homogeneous DAS')
+plt.xlabel('Time (s)')
+plt.ylabel('Depth (m)')
+plt.colorbar(label='Amplitude')
+plt.show()
+
+def plot_tukey_window (alpha=0.5):
+    window = tukey(140, alpha)
+    plt.plot(window)
+    plt.title("Tukey window")
+    plt.ylabel("Amplitude")
+    plt.xlabel("Sample")
+    plt.ylim([0, 1.1])
+    plt.show()
+    # Plot the frequency response of the Tukey window
+    A = fft(window, 2048) / (len(window)/2.0)
+    freq = np.linspace(-0.5, 0.5, len(A))
+    response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    plt.plot(freq, response)
+    plt.axis([-0.5, 0.5, -120, 0])
+    plt.title("Frequency response of the Tukey window")
+    plt.ylabel("Normalized magnitude [dB]")
+    plt.xlabel("Normalized frequency [cycles per sample]")
+    plt.show()
+    plt.figure(figsize=(10, 6))
+
+# def DAS_algorithm (rcvData, alpha=0.5):
+#         for Tx in range(nTx):
+#                 for Rx in range(nRx):
+#                         signal = signal_first_transmitter_141st_receiver #extract data for every time in the loop where 0 is replaced with ntx and the 140 with nrx
+#                         # print(Tx, Rx)
+#                         signal = rcvData[Tx, Rx, :]
+#                         # print (signal.size)
+#                         total_sum = np.sum(signal)
+#                         # print (total_sum)
+#                         analytic_signal = hilbert(signal)
+#                         envelope = abs(analytic_signal)
+#                         #Plotting the original signal and its envelope
+#                         plt.plot(signal, label='Original Signal', color='blue')
+#                         plt.plot(envelope, label='Envelope', color='red', linestyle='--')
+#                         plt.title('Signal and Envelope for Transmitter 1 and Receiver 141')
+#                         plt.xlabel('Time Samples')
+#                         plt.ylabel('Amplitude')
+#                         plt.legend()
+#                         plt.grid(True)
+#                         plt.show()
+#                         envelope_data[Tx,Rx,:] = envelope
+#                 print (envelope_data.size)
+
+
+# Apply the Tukey window and plot its response
+plot_tukey_window(alpha=0.5)
+
+# Apply the Homogeneous DAS algorithm
+envelope_data = homogeneous_DAS_algorithm(rcvData, alpha=0.5)
+
+# Now envelope_data contains the enveloped data with the Tukey window applied.
+=======
 '''
 Tasks:
 Figure out how to load the data into python

@@ -1,0 +1,53 @@
+import scipy.io
+import matplotlib.pyplot as plt
+from scipy import signal
+from scipy.fft import fft, fftshift
+from scipy.signal import hilbert
+from scipy.signal.windows import tukey 
+import numpy as np
+
+# Load the .mat file and access from loaded data
+# print = "I'm loading"
+# waveform = scipy.io.loadmat('waveform.mat')
+# print(waveform)
+data = scipy.io.loadmat('data/waveform.mat')
+# Extracting the signal for the first transmitter and 141st receiver
+waveform = data['waveform']
+print(waveform)
+"""
+Apply a Tukey window to a given signal.
+
+Parameters:
+- signal: The input signal to which the Tukey window will be applied.
+- alpha: The parameter controlling the shape of the Tukey window.
+         0 corresponds to a rectangular window, and 1 corresponds to a Hann window.
+         Values between 0 and 1 produce a Tukey window with intermediate shapes.
+Returns:
+- The input signal multiplied by the Tukey window.
+"""
+
+# Create and apply the window
+def tukey_window(waveform, alpha=0.1, noise_length=300):
+    max_val = np.max(waveform)
+    Nt = np.size(waveform)
+    Nwin = Nt - noise_length
+    window = tukey(Nwin, alpha)
+    padding = np.zeros((noise_length,))
+    print(padding)
+    #Squeeze the waveform so it has the same shape as the window, so the multiply function works properly
+    print(padding.shape)
+    print(window.shape)
+    final_window = np.concatenate([padding, window])
+    waveform = np.squeeze(waveform)
+    waveform_win = np.multiply(final_window , waveform)
+    
+    plt.plot(final_window)
+    plt.plot(waveform/max_val)
+    plt.plot(waveform_win/max_val)
+    plt.show()
+    return waveform_win
+
+result = tukey_window(waveform, alpha=0.5, noise_length =500)
+print(result)
+
+
