@@ -14,25 +14,21 @@ import pandas as pd
 
 df = pd.read_cs('dataset.csv)
 
+print ("trial code")
 import scipy.io
 import matplotlib.pyplot as plt
 from scipy.signal import hilbert
 import numpy as np
-
 # Load the .mat file
 data = scipy.io.loadmat('ultrasound_reflection_data.mat')
-
 # Extracting the signal for the first transmitter and 141st receiver
 signal_first_transmitter_141st_receiver = data['rcvData'][0, 140, :] #data['rcvData'].iloc[[0, 140], :]
-
 # Compute the analytic signal using the Hilbert transform
 analytic_signal = hilbert(signal_first_transmitter_141st_receiver)
-
 rcvData = data['rcvData']
 nTx = rcvData.shape[0]
 nRx = rcvData.shape[1]
 nt = rcvData.shape[2]
-
 plt.figure(figsize=(10, 6))
 envelope_data = np.zeros((nTx,nRx,nt))
 for Tx in range(nTx):
@@ -58,10 +54,21 @@ for Tx in range(nTx):
         envelope_data[Tx,Rx,:] = envelope
 print (envelope_data.size)
     
+# # Extract the envelope of the signal
+# envelope = abs(analytic_signal)
+# # Plotting the original signal and its envelope
+# plt.figure(figsize=(10, 6))
+# plt.plot(signal_first_transmitter_141st_receiver, label='Original Signal', color='blue')
+# plt.plot(envelope, label='Envelope', color='red', linestyle='--')
+# plt.title('Signal and Envelope for Transmitter 1 and Receiver 141')
+# plt.xlabel('Time Samples')
+# plt.ylabel('Amplitude')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
 # # Define the range for zoom-in
 # start_sample = 1750
 # end_sample = 2100
-
 # # Plotting the zoomed-in section of the original signal and its envelope
 # plt.figure(figsize=(10, 6))
 # plt.plot(range(start_sample, end_sample), 
