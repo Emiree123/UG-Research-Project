@@ -7,7 +7,8 @@ from scipy.signal.windows import tukey
 import numpy as np
 
 # Load the .mat file and access from loaded data
-data = scipy.io.loadmat('ultrasound_reflection_data.mat')
+print = "I'm loading"
+data = scipy.io.loadmat('data/ultrasound_reflection_data.mat')
 rcvData = data['rcvData']
 
 """
@@ -47,7 +48,7 @@ def homogeneous_DAS_algorithm(rcvData, alpha=0.5):
 
     envelope_data = np.zeros((nTx, nRx, nt))
     # Extracting the signal for the first transmitter and 141st receiver
-    signal_first_transmitter_141st_receiver = rcvData['rcvData'][0, 140, :] #data['rcvData'].iloc[[0, 140], :]
+    signal_first_transmitter_141st_receiver = rcvData[0, 140, :]
     # Compute the analytic signal using the Hilbert transform
     analytic_signal = hilbert(signal_first_transmitter_141st_receiver)
 
