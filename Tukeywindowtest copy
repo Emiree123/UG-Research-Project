@@ -1,0 +1,140 @@
+import scipy.io
+import matplotlib.pyplot as plt
+from scipy import signal
+from scipy.fft import fft, fftshift
+from scipy.signal import hilbert
+from scipy.signal.windows import tukey 
+import numpy as np
+
+# Load the .mat file and access from loaded data
+# print = "I'm loading"
+# waveform = scipy.io.loadmat('waveform.mat')
+# print(waveform)
+data = scipy.io.loadmat('data/ultrasound_reflection_data.mat') 
+# Extracting the signal for the first transmitter and 141st receiver
+waveform = data['waveform']
+print(waveform)
+"""
+Apply a Tukey window to a given signal.
+
+Parameters:
+- signal: The input signal to which the Tukey window will be applied.
+- alpha: The parameter controlling the shape of the Tukey window.
+         0 corresponds to a rectangular window, and 1 corresponds to a Hann window.
+         Values between 0 and 1 produce a Tukey window with intermediate shapes.
+Returns:
+- The input signal multiplied by the Tukey window.
+"""
+
+# Create and apply the window
+def tukey_window(waveform, alpha=0.1, noise_length=300):
+    max_val = np.max(waveform)
+    Nt = np.size(waveform)
+    Nwin = Nt - noise_length
+    window = tukey(Nwin, alpha)
+    padding = np.zeros((noise_length,))
+    print(padding)
+    # Squeeze the waveform so it has the same shape as the window, so the multiply function works properly
+    print(padding.shape)
+    print(window.shape)
+    final_window = np.concatenate([padding, window])
+    waveform = np.squeeze(waveform)
+    waveform_win = np.multiply(final_window , waveform)
+    
+    plt.plot(final_window)
+    plt.plot(waveform/max_val)
+    plt.plot(waveform_win/max_val)
+    plt.show()
+    return waveform_win
+result = tukey_window(waveform, alpha=0.5, noise_length =500)
+print(result)
+
+# Function for envelope detection
+def envelope_detection(waveform_win):
+    analytic_signal = hilbert(waveform_win)
+    envelope = np.abs(analytic_signal)
+    # Compute and test the envelope function
+    envelope = envelope_detection(waveform_win)
+    return envelope
+
+# Function for pre-processing data
+def preProcessData(waveform, alpha=0.1, noise_length=300):
+    # Apply Tukey window
+    waveform_win = tukey_window(waveform, alpha, noise_length)
+    # Test the pre-processing function 
+    envelope = preProcessData(waveform_win, alpha=0.5, noise_length=500)
+    return envelope
+
+# Plot and save figures for different alpha and noise_length values
+alphas = [0.1, 0.5, 0.9]
+noise_lengths = [300, 500, 700]
+
+for alpha_val in alphas:
+    for noise_length_val in noise_lengths:
+        envelope = preProcessData(waveform, alpha=alpha_val, noise_length=noise_length_val)
+        plt.plot(envelope)
+        plt.title(f"Alpha={alpha_val}, Noise Length={noise_length_val}")
+        plt.xlabel("Sample Index")
+        plt.ylabel("Envelope")
+        plt.savefig(f"envelopealpha{alpha_val}noise{noise_length_val}.png")
+        plt.clf()
+
+# Imaging grid: 
+def createImagingGrid(dx, Lx):
+    Nx = round(Lx / dx)
+    x_vec = np.arange(0, Nx) * dx - np.mean(np.arange(0, Nx) * dx)
+    X, Y = np.meshgrid(x_vec, x_vec)
+    return X, Y
+
+# Test the createImagingGrid function with dx = 0.0003 and Lx = 0.24
+dx = 0.0003
+Lx = 0.24
+X, Y = createImagingGrid(dx, Lx)
+
+# Plot X and Y using plt.imshow
+plt.imshow(X, extent=(X.min(), X.max(), Y.min(), Y.max()))
+plt.colorbar(label="X")
+plt.title("X Matrix")
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.savefig("X_matrix.png")
+plt.clf()
+
+plt.imshow(Y, extent=(X.min(), X.max(), Y.min(), Y.max()))
+plt.colorbar(label="Y")
+plt.title("Y Matrix")
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.savefig("Y_matrix.png")
+
+def getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed):
+    # Calculate the distances
+    distance_tx_to_pixel = np.sqrt((Xt - Xp)2 + (Yt - Yp)2)
+    distance_pixel_to_rx = np.sqrt((Xr - Xp)2 + (Yr - Yp)2)
+
+    # Calculate the total travel distance
+    total_distance = distance_tx_to_pixel + distance_pixel_to_rx
+
+    # Convert distance to travel time
+    travelTime = total_distance / soundSpeed
+
+    return travelTime
+
+# Example data from ultrasound_reflection_data.mat
+elementPositions = np.array([[Xt1, Yt1], [Xt2, Yt2], ...])  # Replace with actual data
+soundSpeed = 1500.0  # Replace with actual sound speed in m/s
+
+# Coordinates for the 1st transmitter and the 31st receiver (replace with actual indices)
+Xt = elementPositions[0, 0]
+Yt = elementPositions[0, 1]
+Xr = elementPositions[30, 0]
+Yr = elementPositions[30, 1]
+
+# Make an imaging grid and choose a random pixel
+X, Y = createImagingGrid(dx, Lx)  # Replace with actual values or use your existing grid
+Xp = X[300, 400]  # Replace with the desired pixel coordinates
+Yp = Y[300, 400]
+
+# Calculate the travel time
+travelTime = getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed)
+print(f"Travel Time: {travelTime} seconds ({travelTime * 1e6} microseconds)")
