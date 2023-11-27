@@ -10,7 +10,7 @@ import numpy as np
 # print = "I'm loading"
 # waveform = scipy.io.loadmat('waveform.mat')
 # print(waveform)
-data = scipy.io.loadmat('data/waveform.mat')
+data = scipy.io.loadmat('ultrasound_reflection_data.mat')
 # Extracting the signal for the first transmitter and 141st receiver
 waveform = data['waveform']
 print(waveform)
