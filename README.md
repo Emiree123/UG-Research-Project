@@ -1,3 +1,5 @@
+Install Anaconda, jupyter notebooks
+
 # UG-Research-Project
 
 git branch: check current branch
