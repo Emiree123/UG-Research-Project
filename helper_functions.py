@@ -61,3 +61,13 @@ def getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed):
 
     return travelTime
 
+def time_to_sample_index(time, sample_frequency):
+    return int(time * sample_frequency)
+
+# Assuming you have a time value in seconds and the sample frequency
+time = 0.001  # Replace with your time value
+sample_frequency = 10e6  # Replace with your sample frequency
+
+sample_index = time_to_sample_index(time, sample_frequency)
+print(f"Sample Index: {sample_index}")
+
