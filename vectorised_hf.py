@@ -6,27 +6,44 @@ from scipy.signal import hilbert
 from scipy.signal.windows import tukey 
 import numpy as np
 
-def tukey_window(waveform, alpha=0.1, noise_length=300): #add fourth variable for true or false on plotting data  or write the plotting in the script instead!
+def tukey_window(waveform, alpha=0.1, noise_length=300, plot=False): #add fourth variable for true or false on plotting data  or write the plotting in the script instead!
     max_val = np.max(waveform)
     Nt = np.size(waveform)
     Nwin = Nt - noise_length
     window = tukey(Nwin, alpha)
+    # Replicate the 1D window into the 2D array
+    replicated_window = np.tile(window, (waveform.shape[0], 1))
     padding = np.zeros((noise_length,))
     # print(padding)
     #Squeeze the waveform so it has the same shape as the window, so the multiply function works properly
     # print(padding.shape)
     # print(window.shape)
-    final_window = np.concatenate([padding, window])
+    final_window = np.concatenate([padding, replicated_window])
     waveform = np.squeeze(waveform)
-    waveform_win = np.multiply(final_window , waveform)
+    waveform_win = np.multiply(final_window , waveform)    
 
-    # Plot the waveform
-    # plt.figure(figsize=(10, 6))  # Set the size of the plot
-    # plt.plot(waveform/max_val, color='blue', linestyle='-', linewidth=0.2)  # waveform and its window
-    # plt.plot(waveform_win/max_val, color='red', linestyle='-', linewidth=0.2)
-    # plt.savefig('waveform.png', dpi=300)  # Saves the plot as a PNG file
-    # plt.show()
+    # if plot: 
+        # Plot the waveform
+        # plt.figure(figsize=(10, 6))  # Set the size of the plot
+        # plt.plot(waveform/max_val, color='blue', linestyle='-', linewidth=0.2)  # waveform and its window
+        # plt.plot(waveform_win/max_val, color='red', linestyle='-', linewidth=0.2)
+        # plt.savefig('waveform.png', dpi=300)  # Saves the plot as a PNG file
+        # plt.show()
     return waveform_win
+
+def Tukey(N, alpha):
+    x = np.linspace(0, 1, N, endpoint=False) #Create linearly spaced values
+    # Implement Tukey window formula
+    window = np.ones_like(x)  
+    # Define masks for different sections
+    mask1 = (x < alpha / 2)
+    mask2 = (x >= 1 - alpha / 2)
+    mask3 = np.logical_and(x >= alpha / 2, x < 1 - alpha / 2)
+    # Apply tukey window formula
+    window[mask1] = 0.5 * (1 + np.cos(2 * np.pi / alpha * (x[mask1] - alpha / 2)))
+    window[mask2] = 0.5 * (1 + np.cos(2 * np.pi / alpha * (x[mask2] - 1 + alpha / 2)))
+    window[mask3] = 1.0
+    return window
 
 def envelope_detection(waveform_win):
     analytic_signal = hilbert(waveform_win)
@@ -36,10 +53,19 @@ def envelope_detection(waveform_win):
     return envelope
 
 def preProcessData(waveform, alpha=0.1, noise_length=300):
-    # Apply Tukey window
-    waveform_win = tukey_window(waveform, alpha, noise_length)
-    # Test the pre-processing function 
-    envelope = envelope_detection(waveform_win)
+    # Assuming waveform is a 3D array [Ntx, Nrx, Nt]
+    Ntx, Nrx, Nt = waveform.shape
+    # Reshape waveform to a 2D array [Ntx * Nrx, Nt]
+    reshapedData = waveform.reshape((Ntx * Nrx, Nt))
+    processedData = np.zeros_like(reshapedData)
+    # Process the rows
+    for i in range(reshapedData.shape[0]):
+        waveform = reshapedData[i, :]
+        # Apply Tukey window
+        waveform_win = tukey_window(waveform, alpha, noise_length)
+        # Vectorized envelope detection
+        envelope = envelope_detection(waveform_win)
+        processedData[i, :] = envelope
     return envelope
 
 def createImagingGrid(dx, Lx):
