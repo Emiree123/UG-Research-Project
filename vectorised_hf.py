@@ -6,65 +6,59 @@ from scipy.signal import hilbert
 from scipy.signal.windows import tukey 
 import numpy as np
 
-def tukey_window(waveform, alpha=0.1, noise_length=300, plot=False): #add fourth variable for true or false on plotting data  or write the plotting in the script instead!
-    max_val = np.max(waveform)
-    Nt = np.size(waveform)
-    Nwin = Nt - noise_length
+def tukey_vectorised(rcvData2D, alpha=0.1, noise_Length=300, plot =False):
+    # Determine the shape of the input 2D array
+    N, Nt = rcvData2D.shape 
+    # Find the maximum value in the 2D array for normalisation later
+    max_val = np.max(rcvData2D)
+    # Calculate the dimensions of the transmit and receive arrays
+    Ntx  = np.sqrt(N)
+    Nrx = Ntx
+    # Calculate the window length, excluding the noise length
+    Nwin = Nt - noise_Length
+    # Create a Tukey window with the given alpha parameter
     window = tukey(Nwin, alpha)
-    # Replicate the 1D window into the 2D array
-    replicated_window = np.tile(window, (waveform.shape[0], 1))
-    padding = np.zeros((noise_length,))
-    # print(padding)
-    #Squeeze the waveform so it has the same shape as the window, so the multiply function works properly
-    # print(padding.shape)
-    # print(window.shape)
-    final_window = np.concatenate([padding, replicated_window])
-    waveform = np.squeeze(waveform)
-    waveform_win = np.multiply(final_window , waveform)    
+    # Create a padding array of zeros for the noise
+    padding = np.zeros(noise_Length)
+    # Combine the padding and tukey window together
+    final_window = np.concatenate([padding, window])
+    print(final_window.shape)
+    print(Ntx)
+    print(Nrx)
+    # Replicate the 1D window into thte 2D array
+    stack = np.tile(final_window, (N,1))
+    rcvData2D = np.squeeze(rcvData2D)
+    # Apply the window to the rcvData2D with element-wise multiplication
+    winData2D = np.multiply(rcvData2D, stack)
+    print (winData2D.size)
+    if plot: 
+        # Plot the winData2D
+        plt.figure(figsize=(10, 6))  # Set the size of the plot
+        plt.plot(winData2D/max_val, color='blue', linestyle='-', linewidth=0.2)  # waveform and its window
+        plt.plot(winData2D/max_val, color='red', linestyle='-', linewidth=0.2)
+        plt.savefig('winData2D_win.png', dpi=300)  # Saves the plot as a PNG file
+        plt.show()
+    return winData2D
 
-    # if plot: 
-        # Plot the waveform
-        # plt.figure(figsize=(10, 6))  # Set the size of the plot
-        # plt.plot(waveform/max_val, color='blue', linestyle='-', linewidth=0.2)  # waveform and its window
-        # plt.plot(waveform_win/max_val, color='red', linestyle='-', linewidth=0.2)
-        # plt.savefig('waveform.png', dpi=300)  # Saves the plot as a PNG file
-        # plt.show()
-    return waveform_win
-
-def Tukey(N, alpha):
-    x = np.linspace(0, 1, N, endpoint=False) #Create linearly spaced values
-    # Implement Tukey window formula
-    window = np.ones_like(x)  
-    # Define masks for different sections
-    mask1 = (x < alpha / 2)
-    mask2 = (x >= 1 - alpha / 2)
-    mask3 = np.logical_and(x >= alpha / 2, x < 1 - alpha / 2)
-    # Apply tukey window formula
-    window[mask1] = 0.5 * (1 + np.cos(2 * np.pi / alpha * (x[mask1] - alpha / 2)))
-    window[mask2] = 0.5 * (1 + np.cos(2 * np.pi / alpha * (x[mask2] - 1 + alpha / 2)))
-    window[mask3] = 1.0
-    return window
-
-def envelope_detection(waveform_win):
-    analytic_signal = hilbert(waveform_win)
-    envelope = np.abs(analytic_signal)
+def envelope_detection(winData2D):
+    analytic_signal = hilbert(winData2D)
+    envData2D = np.abs(analytic_signal)
     # Compute and test the envelope function
-    # envelope = envelope_detection(waveform_win)
-    return envelope
+    return envData2D
 
-def preProcessData(waveform, alpha=0.1, noise_length=300):
-    # Assuming waveform is a 3D array [Ntx, Nrx, Nt]
-    Ntx, Nrx, Nt = waveform.shape
-    # Reshape waveform to a 2D array [Ntx * Nrx, Nt]
-    reshapedData = waveform.reshape((Ntx * Nrx, Nt))
-    processedData = np.zeros_like(reshapedData)
+def preProcessDataVectorised(rcvData, alpha=0.1, noise_length=300):
+    # Assuming rcvData is a 3D array [Ntx, Nrx, Nt]
+    Ntx, Nrx, Nt = rcvData.shape
+    # Reshape rcvData2D to a 2D array [Ntx * Nrx, Nt]
+    rcvData2D = rcvData.reshape((Ntx * Nrx, Nt))
+    processedData = np.zeros_like(rcvData2D)
     # Process the rows
-    for i in range(reshapedData.shape[0]):
-        waveform = reshapedData[i, :]
+    for i in range(rcvData2D.shape[0]):
+        rcvData = rcvData2D[i, :]
         # Apply Tukey window
-        waveform_win = tukey_window(waveform, alpha, noise_length)
+        winData2D = tukey_vectorised(rcvData2D, alpha, noise_length)
         # Vectorized envelope detection
-        envelope = envelope_detection(waveform_win)
+        envelope = envelope_detection(winData2D)
         processedData[i, :] = envelope
     return envelope
 
@@ -72,7 +66,36 @@ def createImagingGrid(dx, Lx):
     Nx = round(Lx / dx)
     x_vec = np.arange(0, Nx) * dx - np.mean(np.arange(0, Nx) * dx)
     X, Y = np.meshgrid(x_vec, x_vec)
-    return X, Y
+    # Reshape 2D grids X and Y into 1D arrays
+    X_flat = X.flatten()
+    Y_flat = Y.flatten()
+
+    return X_flat, Y_flat
+
+def calculateDistanceMap(Xd, Yd, Xp, Yp):
+    # Calculate the distance map between detector coordinates and pixel coordinates.
+    # Reshape Xd and Yd to allow broadcasting with Xp and Yp
+    Xd = Xd[:, np.newaxis]  # Shape becomes (len(Xd), 1)
+    Yd = Yd[:, np.newaxis]  # Shape becomes (len(Yd), 1)
+    # Calculate squared distances
+    dist_squared = (Xd - Xp) ** 2 + (Yd - Yp) ** 2
+    # Return the square root of squared distances
+    distance = np.sqrt(dist_squared)
+    return distance
+
+def timeMap(distanceMap, speedOfSound):
+    # Speed of sound in meters per second (m/s)
+    # Convert distance from meters to time in seconds
+    time = distanceMap / speedOfSound
+    return time
+
+def createDelayMap(elementPositions, X, Y):
+    #Dimensions of elementPositions is 2x256 and X,Y is a 2D square matrix -> make everything into a vector
+    Xd_vector = elementPositions[:,0]
+    Yd_vector = elementPositions[:,1]
+    print(np.size(Xd_vector))
+    print(np.size(Yd_vector))
+
 
 def getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed):
     # Calculate the distances
@@ -89,8 +112,6 @@ def getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed):
 
 def time_to_sample_index(time, sample_frequency):
     return int(time * sample_frequency)
-
-
 
 def accumulate_signal(Tx, Rx, Xp, Yp, elementPositions, soundSpeed, samplingFrequency, rcvData):
     # Extract the waveform for the Tx-Rx pair
