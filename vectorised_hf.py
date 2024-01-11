@@ -111,7 +111,7 @@ def getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed):
     return travelTime
 
 def time_to_sample_index(time, sample_frequency):
-    return (time * sample_frequency)
+    return np.round(time * sample_frequency)
 
 def accumulate_signal(Tx, Rx, Xp, Yp, elementPositions, soundSpeed, samplingFrequency, rcvData):
     # Extract the waveform for the Tx-Rx pair
