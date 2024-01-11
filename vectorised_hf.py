@@ -46,7 +46,7 @@ def envelope_detection(winData2D):
     # Compute and test the envelope function
     return envData2D
 
-def preProcessDataVectorised(rcvData, alpha=0.1, noise_length=300):
+#def preProcessDataVectorised(rcvData, alpha=0.1, noise_length=300):
     # Assuming rcvData is a 3D array [Ntx, Nrx, Nt]
     Ntx, Nrx, Nt = rcvData.shape
     # Reshape rcvData2D to a 2D array [Ntx * Nrx, Nt]
@@ -62,7 +62,7 @@ def preProcessDataVectorised(rcvData, alpha=0.1, noise_length=300):
         processedData[i, :] = envelope
     return envelope
 
-def createImagingGrid(dx, Lx):
+def createImagingVector(dx, Lx):
     Nx = round(Lx / dx)
     x_vec = np.arange(0, Nx) * dx - np.mean(np.arange(0, Nx) * dx)
     X, Y = np.meshgrid(x_vec, x_vec)
@@ -70,17 +70,17 @@ def createImagingGrid(dx, Lx):
     X_flat = X.flatten()
     Y_flat = Y.flatten()
 
-    return X_flat, Y_flat
+    return X_flat, Y_flat # Returns a vector
+
+#def createImagingGrid # Make two functions, one in 2D and one in 1D
 
 def calculateDistanceMap(Xd, Yd, Xp, Yp):
     # Calculate the distance map between detector coordinates and pixel coordinates.
-    # Reshape Xd and Yd to allow broadcasting with Xp and Yp
-    Xd = Xd[:, np.newaxis]  # Shape becomes (len(Xd), 1)
-    Yd = Yd[:, np.newaxis]  # Shape becomes (len(Yd), 1)
     # Calculate squared distances
-    dist_squared = (Xd - Xp) ** 2 + (Yd - Yp) ** 2
+    dist_squared = (Xp - Xd) ** 2 + (Yp - Yd) ** 2
     # Return the square root of squared distances
     distance = np.sqrt(dist_squared)
+    
     return distance
 
 def timeMap(distanceMap, speedOfSound):
@@ -111,7 +111,7 @@ def getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed):
     return travelTime
 
 def time_to_sample_index(time, sample_frequency):
-    return int(time * sample_frequency)
+    return (time * sample_frequency)
 
 def accumulate_signal(Tx, Rx, Xp, Yp, elementPositions, soundSpeed, samplingFrequency, rcvData):
     # Extract the waveform for the Tx-Rx pair
