@@ -6,26 +6,26 @@ from scipy.signal import hilbert
 from scipy.signal.windows import tukey 
 import numpy as np
 
-def tukey_window(waveform, alpha=0.1, noise_length=300):
+def tukey_window(waveform, alpha=0.1, noise_length=300): #add fourth variable for true or false on plotting data  or write the plotting in the script instead!
     max_val = np.max(waveform)
     Nt = np.size(waveform)
     Nwin = Nt - noise_length
     window = tukey(Nwin, alpha)
     padding = np.zeros((noise_length,))
-    print(padding)
+    # print(padding)
     #Squeeze the waveform so it has the same shape as the window, so the multiply function works properly
-    print(padding.shape)
-    print(window.shape)
+    # print(padding.shape)
+    # print(window.shape)
     final_window = np.concatenate([padding, window])
     waveform = np.squeeze(waveform)
     waveform_win = np.multiply(final_window , waveform)
 
     # Plot the waveform
-    plt.figure(figsize=(10, 6))  # Set the size of the plot
-    plt.plot(waveform/max_val, color='blue', linestyle='-', linewidth=0.2)  # waveform and its window
-    plt.plot(waveform_win/max_val, color='red', linestyle='-', linewidth=0.2)
-    plt.savefig('waveform.png', dpi=300)  # Saves the plot as a PNG file
-    plt.show()
+    # plt.figure(figsize=(10, 6))  # Set the size of the plot
+    # plt.plot(waveform/max_val, color='blue', linestyle='-', linewidth=0.2)  # waveform and its window
+    # plt.plot(waveform_win/max_val, color='red', linestyle='-', linewidth=0.2)
+    # plt.savefig('waveform.png', dpi=300)  # Saves the plot as a PNG file
+    # plt.show()
     return waveform_win
 
 def envelope_detection(waveform_win):
@@ -64,10 +64,38 @@ def getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed):
 def time_to_sample_index(time, sample_frequency):
     return int(time * sample_frequency)
 
-# Assuming you have a time value in seconds and the sample frequency
-time = 0.001  # Replace with your time value
-sample_frequency = 10e6  # Replace with your sample frequency
 
-sample_index = time_to_sample_index(time, sample_frequency)
-print(f"Sample Index: {sample_index}")
 
+def accumulate_signal(Tx, Rx, Xp, Yp, elementPositions, soundSpeed, samplingFrequency, rcvData):
+    # Extract the waveform for the Tx-Rx pair
+    signal = rcvData[Tx, Rx, :]
+
+    # Process the extracted waveform
+    processed_signal = preProcessData(signal, alpha=0.2, noise_length=300)
+
+    # Get Transmitter and Receiver coordinates
+    Xt = elementPositions[Tx, 0]
+    Yt = elementPositions[Tx, 1]
+    Xr = elementPositions[Rx, 0]
+    Yr = elementPositions[Rx, 1]
+
+    # Calculate travel time
+    travelTime = getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed)
+
+    # Convert travel time to sample index
+    sample_index = time_to_sample_index(travelTime, samplingFrequency)
+
+    # Extract value if within bounds and return
+    if 0 <= sample_index < len(processed_signal):
+        return processed_signal[sample_index]
+    else:
+        return 0
+    
+
+
+# # Assuming you have a time value in seconds and the sample frequency
+# time = 0.001  # Replace with your time value
+# sample_frequency = 10e6  # Replace with your sample frequency
+
+# sample_index = time_to_sample_index(time, sample_frequency)
+# print(f"Sample Index: {sample_index}")
