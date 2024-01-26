@@ -72,7 +72,13 @@ def createImagingVector(dx, Lx):
 
     return X_flat, Y_flat # Returns a vector
 
-#def createImagingGrid # Make two functions, one in 2D and one in 1D
+#Two functions, one in 2D and one in 1D
+def createImagingGrid(dx,Lx):
+    Nx = round(Lx / dx)
+    x_vec = np.arange(0, Nx) * dx - np.mean(np.arange(0, Nx) * dx)
+    X, Y = np.meshgrid(x_vec, x_vec)
+    return X, Y
+    # Reshape 2D grids X and Y into 1D arrays
 
 def calculateDistanceMap(Xd, Yd, Xp, Yp):
     # Calculate the distance map between detector coordinates and pixel coordinates.
@@ -111,7 +117,7 @@ def getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed):
     return travelTime
 
 def time_to_sample_index(time, sample_frequency):
-    return np.round(time * sample_frequency)
+    return np.round(time *sample_frequency)
 
 def accumulate_signal(Tx, Rx, Xp, Yp, elementPositions, soundSpeed, samplingFrequency, rcvData):
     # Extract the waveform for the Tx-Rx pair
@@ -137,12 +143,4 @@ def accumulate_signal(Tx, Rx, Xp, Yp, elementPositions, soundSpeed, samplingFreq
         return processed_signal[sample_index]
     else:
         return 0
-    
 
-
-# # Assuming you have a time value in seconds and the sample frequency
-# time = 0.001  # Replace with your time value
-# sample_frequency = 10e6  # Replace with your sample frequency
-
-# sample_index = time_to_sample_index(time, sample_frequency)
-# print(f"Sample Index: {sample_index}")
