@@ -41,8 +41,8 @@ def tukey_vectorised(rcvData2D, alpha=0.1, noise_Length=300, plot =False):
     return winData2D
 
 def envelope_detection(winData2D):
-    analytic_signal = hilbert(winData2D)
-    envData2D = np.abs(analytic_signal)
+    envData2D = hilbert(winData2D)
+    # envData2D = np.abs(analytic_signal)
     # Compute and test the envelope function
     return envData2D
 
