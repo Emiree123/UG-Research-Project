@@ -46,6 +46,7 @@ def envelope_detection(winData2D):
     # Compute and test the envelope function
     return envData2D
 
+
 def createImagingVector(dx, Lx):
     Nx = round(Lx / dx)
     x_vec = np.arange(0, Nx) * dx - np.mean(np.arange(0, Nx) * dx)
@@ -140,4 +141,4 @@ def accumulate_signal(Tx, Rx, Xp, Yp, elementPositions, soundSpeed, samplingFreq
         return processed_signal[sample_index]
     else:
         return 0
-    
+

@@ -17,3 +17,8 @@ git add . (all the files that have been changed)
 git commit -m "commit message" (description of the change that was made)
 
 dummy change 2
+
+## Sync functions and scripts:
+    "jupyter.runStartupCommands": [
+        "%load_ext autoreload", "%autoreload 2"
+    ]
