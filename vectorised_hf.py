@@ -41,34 +41,19 @@ def tukey_vectorised(rcvData2D, alpha=0.1, noise_Length=300, plot =False):
     return winData2D
 
 def envelope_detection(winData2D):
-    analytic_signal = hilbert(winData2D)
-    envData2D = np.abs(analytic_signal)
+    envData2D = hilbert(winData2D)
+    # envData2D = np.abs(analytic_signal)
     # Compute and test the envelope function
     return envData2D
 
-#def preProcessDataVectorised(rcvData, alpha=0.1, noise_length=300):
-    # Assuming rcvData is a 3D array [Ntx, Nrx, Nt]
-    Ntx, Nrx, Nt = rcvData.shape
-    # Reshape rcvData2D to a 2D array [Ntx * Nrx, Nt]
-    rcvData2D = rcvData.reshape((Ntx * Nrx, Nt))
-    processedData = np.zeros_like(rcvData2D)
-    # Process the rows
-    for i in range(rcvData2D.shape[0]):
-        rcvData = rcvData2D[i, :]
-        # Apply Tukey window
-        winData2D = tukey_vectorised(rcvData2D, alpha, noise_length)
-        # Vectorized envelope detection
-        envelope = envelope_detection(winData2D)
-        processedData[i, :] = envelope
-    return envelope
 
 def createImagingVector(dx, Lx):
     Nx = round(Lx / dx)
     x_vec = np.arange(0, Nx) * dx - np.mean(np.arange(0, Nx) * dx)
     X, Y = np.meshgrid(x_vec, x_vec)
     # Reshape 2D grids X and Y into 1D arrays
-    X_flat = X.flatten()
-    Y_flat = Y.flatten()
+    X_flat = X.flatten('F')
+    Y_flat = Y.flatten('F')
 
     return X_flat, Y_flat # Returns a vector
 
@@ -86,8 +71,21 @@ def calculateDistanceMap(Xd, Yd, Xp, Yp):
     dist_squared = (Xp - Xd) ** 2 + (Yp - Yd) ** 2
     # Return the square root of squared distances
     distance = np.sqrt(dist_squared)
-    
     return distance
+
+def calculateElementNormals():
+    Nmodule = 16
+    deltaTheta = 360/Nmodule
+    moduleNormals = np.arange(0,deltaTheta,360-deltaTheta)
+    # Calculate the normal angle for each individual element
+    elementNormals = np.tile(moduleNormals,(Nmodule,1))
+    elementNormals = elementNormals.flatten()
+    sinvals = np.sin(elementNormals)
+    cosvals = np.cos(elementNormals)
+    
+    elementNormalVec = np.concatenate(sinvals,cosvals)
+    return elementNormalVec
+
 
 def timeMap(distanceMap, speedOfSound):
     # Speed of sound in meters per second (m/s)
@@ -117,7 +115,7 @@ def getTravelTime(Xt, Yt, Xr, Yr, Xp, Yp, soundSpeed):
     return travelTime
 
 def time_to_sample_index(time, sample_frequency):
-    return np.round(time *sample_frequency)
+    return np.round(time * sample_frequency)
 
 def accumulate_signal(Tx, Rx, Xp, Yp, elementPositions, soundSpeed, samplingFrequency, rcvData):
     # Extract the waveform for the Tx-Rx pair
