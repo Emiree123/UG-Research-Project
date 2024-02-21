@@ -16,7 +16,9 @@ git push origin feat_goodbye_world: push feature branch to github website (after
 git add . (all the files that have been changed)
 git commit -m "commit message" (description of the change that was made)
 
-dummy change 2
+git push --set-upstream origin week11 -> 'week11'  is simply the branch name
+
+
 
 ## Sync functions and scripts:
     "jupyter.runStartupCommands": [
