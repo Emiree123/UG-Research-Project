@@ -1,7 +1,11 @@
-Install Anaconda, jupyter notebooks
+This project utilises full-waveform inversion imaging data and recomputes it into reflection imaging data, designed to be used in Breast Cancer Ultrasound Image Acquisition, using an OpenSource Scanner.
 
 # UG-Research-Project
 
+
+
+Notes to self: 
+Install Anaconda, jupyter notebooks
 git branch: check current branch
 git checkout -b feat_name: create new branch for new feature
 git checkout banch_name: change branch to branch_name
